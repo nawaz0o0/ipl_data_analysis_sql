@@ -1,14 +1,77 @@
-**1. Number of matches each team has played**
+--1. Total number of matches played in each season.
 
-SELECT
-  team_name,
-  COUNT(*) AS total_matches
-FROM (
-    SELECT team1 AS team_name
-    FROM matches
-    UNION ALL
-    SELECT team2 AS team_name
-    FROM matches
-  ) AS combined_teams
-GROUP BY team_name
-ORDER BY total_matches DESC;
+select
+  season,
+  count(*) as total_matches
+from matches
+group by season
+order by season asc
+
+--2. top 5 players with the most "Player of the Match" awards.
+
+select
+  player_of_match,
+  count(player_of_match) as times
+from matches
+group by player_of_match
+order by times desc
+limit 5
+
+--3. venues where the highest number of matches have been played.
+
+select
+  venue,
+  count(venue) as times_played
+from matches
+group by venue
+order by times_played desc
+
+--4. Find the team that has won the most matches.
+
+select
+  winner as team,
+  count(winner) as times_won
+from matches
+group by winner
+order by times_won desc
+limit 1
+
+--5. the player who faced the most balls in a single IPL season.
+
+select
+  season,
+  batter,
+  count(ball) as balls_faced
+from dvs as d
+  join matches as m on d.match_id = m.id
+group by
+  season,
+  batter
+order by balls_faced desc
+limit 1
+
+--6. top 3 highest run-scorers in the IPL (overall, considering all seasons).
+
+select
+  batter as players,
+  sum(batsman_runs) as total_runs
+from dvs
+group by batter
+order by total_runs desc
+limit 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
