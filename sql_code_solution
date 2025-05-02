@@ -1,0 +1,14 @@
+**1. Number of matches each team has played**
+
+SELECT
+  team_name,
+  COUNT(*) AS total_matches
+FROM (
+    SELECT team1 AS team_name
+    FROM matches
+    UNION ALL
+    SELECT team2 AS team_name
+    FROM matches
+  ) AS combined_teams
+GROUP BY team_name
+ORDER BY total_matches DESC;
