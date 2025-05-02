@@ -60,6 +60,196 @@ group by batter
 order by total_runs desc
 limit 3
 
+--7. number of matches each team has played, and result sort in desc order
+
+
+SELECT
+  team_name,
+  COUNT(*) AS total_matches
+FROM (
+    SELECT team1 AS team_name
+    FROM matches
+    UNION ALL
+    SELECT team2 AS team_name
+    FROM matches
+  ) AS combined_teams
+GROUP BY team_name
+ORDER BY total_matches DESC;
+
+--8. top 3 batsmen with the most runs in a season.
+
+select
+  batter as batsman,
+  season,
+  sum(batsman_runs) as runs
+from dvs as d
+  join matches as m on d.match_id = m.id
+where season = '2016'
+group by
+  batter,
+  season
+order by runs desc
+limit 3
+
+--9. the player with the most number of boundaries (fours + sixes) in a single IPL season.
+
+select
+  season,
+  batter as batsman,
+  count(batsman_runs) as total_boundaries
+from dvs as d
+  join matches as m on d.match_id = m.id
+where batsman_runs = 4 or batsman_runs = 6
+group by
+  season,
+  batter
+order by total_boundaries desc
+limit 1
+
+---10. total number of runs scored by each team in each season.
+
+select
+  season,
+  batting_team,
+  (sum(batsman_runs) + sum(extra_runs)) as runs
+from dvs d
+  join matches as m on d.match_id = m.id
+group by
+  season,
+  batting_team
+
+--11. player with the highest strike rate for each IPL season.
+
+select
+  season,
+  batter as batsman,
+  strike_rate
+from (
+    select
+      season,
+      batter,
+      (
+        sum(batsman_runs) / nullif(count(ball), 0) * 100
+      ) as strike_rate,
+      row_number() over(
+        partition by season
+        order by
+          (
+            sum(batsman_runs) / nullif(count(ball), 0) * 100
+          ) desc
+      ) as ranks
+    from dvs as d
+      join matches as m on d.match_id = m.id
+    group by
+      season,
+      batter
+  )
+where ranks = 1
+
+--12. the bowler who conceded the most runs in a single IPL season.
+
+select
+  season,
+  bowler,
+  sum(total_runs) as conceded_runs
+from dvs as d
+  join matches as m on d.match_id = m.id
+group by
+  bowler,
+  season
+order by conceded_runs desc
+limit 1
+
+--13. the player who took the most wickets in a single IPL season.
+
+select
+  bowler,
+  season,
+  total_wickets
+from (
+    select
+      season,
+      bowler,
+      count(is_wicket) as total_wickets,
+      row_number() over(
+        partition by season
+        order by count(is_wicket) desc
+      ) as ranks
+    from dvs as d
+      join matches as m on d.match_id = m.id
+    where
+      is_wicket = 1
+      and dismissal_kind != 'retired hurt'
+      and dismissal_kind != 'retired out'
+      and dismissal_kind != 'run out'
+    group by
+      season,
+      bowler
+  )
+where ranks = 1
+order by total_wickets desc
+limit 1;
+
+14. highest run-scorer in each IPL season (including extras).
+
+select
+  season,
+  bowler,
+  economy_rate
+from (
+    select
+      season,
+      bowler,
+      (sum(total_runs) / (count(ball) / 6.0)) as economy_rate,
+      row_number() over (
+        partition by season
+        order by
+          (sum(total_runs) / (count(ball) / 6.0)) asc
+      ) as ranks
+    from dvs as d
+      join matches as m on d.match_id = m.id
+    group by
+      season,
+      bowler
+    having
+      count(ball) / 6.0 > 10
+  ) as ranked_bowler
+where ranks = 1
+order by economy_rate asc;
+
+--15. top 3 players with the highest total runs in each IPL season.
+
+with highest_runs as(
+    select
+      season,
+      batter,
+      sum(batsman_runs) as runs_scored,
+      row_number() over(
+        partition by season
+        order by sum(batsman_runs) desc
+      ) as ranks
+    from dvs as d
+      join matches as m on d.match_id = m.id
+    group by
+      season,
+      batter
+  )
+select
+  season,
+  batter as player,
+  runs_scored
+from highest_runs
+where ranks in (1, 2, 3)
+
+
+
+
+
+
+
+
+
+
 
 
 
